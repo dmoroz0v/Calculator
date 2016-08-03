@@ -7,15 +7,19 @@ class ViewController: UIViewController
 
 	private var userIsInTheMiddleOfTyping = false
 
-	private var brain = CalculatorBrain()
+	private let brain = CalculatorBrain()
 
-	private let formatter = NSNumberFormatter();
+	private let formatter: NSNumberFormatter;
+
+	required init?(coder aDecoder: NSCoder) {
+		formatter = NSNumberFormatter()
+		formatter.maximumFractionDigits = 8
+		super.init(coder: aDecoder)
+	}
 
 	override func viewDidLoad()
 	{
 		super.viewDidLoad()
-
-		formatter.maximumFractionDigits = 8
 
 		brain.resultChangeHandler = { [unowned self] result in self.displayValue = result }
 		brain.descriptionChangeHandler = { [unowned self] description in self.subDisplay.text = description }

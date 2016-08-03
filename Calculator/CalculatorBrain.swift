@@ -23,7 +23,7 @@ class CalculatorBrain
 		case Operand(String)
 	}
 
-	private var history: Array<HistoryItem> = []
+	private var history = [HistoryItem]()
 
 	private(set) var result = 0.0 {
 		didSet {
@@ -48,7 +48,7 @@ class CalculatorBrain
 		"rand": Operation.DynamicValue({ return Double(random()%1000) / 1000.0 })
 	]
 
-	private let formatter = NSNumberFormatter();
+	private let formatter: NSNumberFormatter
 
 	var description: String {
 		var result = ""
@@ -110,6 +110,7 @@ class CalculatorBrain
 
 	init()
 	{
+		formatter = NSNumberFormatter();
 		formatter.maximumFractionDigits = 4
 	}
 
