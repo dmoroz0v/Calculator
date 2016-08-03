@@ -19,8 +19,15 @@ class CalculatorBrain
 
 	private enum HistoryItem
 	{
-		case Operation(String)
+		case BinaryOperation(String)
+		case UnaryOperation(String)
 		case Operand(String)
+		case Equals
+
+		var isBinaryOperation: Bool {
+			if case .BinaryOperation(_) = self { return true; }
+			return false;
+		}
 	}
 
 	private var history = [HistoryItem]()
@@ -67,25 +74,20 @@ class CalculatorBrain
 			{
 			case .Operand(let value):
 				result += formattedValueFromRaw(value)
-			case .Operation(let operationSymbol):
-				let operation = operations[operationSymbol]!
-				if case .UnaryOperation(_) = operation
+			case .UnaryOperation(let operationSymbol):
+				if case .Operand(let value) = history[index - 1]
 				{
-					if case .Operand(let value) = history[index - 1]
-					{
-						let formattedValue = formattedValueFromRaw(value);
-						result = (result as NSString).substringToIndex(result.characters.count - formattedValue.characters.count)
-						result += operationSymbol + "(" + formattedValue + ")"
-					}
-					else
-					{
-						result = operationSymbol + "(" + result + ")"
-					}
+					let formattedValue = formattedValueFromRaw(value);
+					result = (result as NSString).substringToIndex(result.characters.count - formattedValue.characters.count)
+					result += operationSymbol + "(" + formattedValue + ")"
 				}
-				else if case .BinaryOperation(_) = operation
+				else
 				{
-					result += operationSymbol
+					result = operationSymbol + "(" + result + ")"
 				}
+			case .BinaryOperation(let operationSymbol):
+				result += operationSymbol
+			case .Equals: break
 			}
 
 			index += 1
@@ -123,7 +125,7 @@ class CalculatorBrain
 
 		result = operand
 
-		self.addHistoryItem(HistoryItem.Operand(String(result)))
+		self.addHistoryItem(.Operand(String(result)))
 	}
 
 	func performOperation(symbol: String)
@@ -139,53 +141,39 @@ class CalculatorBrain
 				result = function()
 
 			case .UnaryOperation(let function):
-				if history.count == 0
+				if history.count == 0 || history.last!.isBinaryOperation
 				{
 					self.addHistoryItem(self.historyItemForOperand(result))
-				}
-				if case .Operation(let operationSymbol)? = history.last
-				{
-					let operation = operations[operationSymbol]!
-					if case .BinaryOperation(_) = operation
-					{
-						self.addHistoryItem(self.historyItemForOperand(result))
-					}
 				}
 
 				result = function(result)
 
-				self.addHistoryItem(HistoryItem.Operation(symbol))
+				self.addHistoryItem(.UnaryOperation(symbol))
 
 			case .BinaryOperation(let function):
 				executeBinaryOperation()
 
 				pending = PendingBinaryOperationInfo(binaryOperation: function, firstOperand: result)
 
-				self.addHistoryItem(HistoryItem.Operation(symbol))
+				self.addHistoryItem(.BinaryOperation(symbol))
 
 			case .Equals:
 				executeBinaryOperation()
 
-				self.addHistoryItem(HistoryItem.Operation(symbol))
+				self.addHistoryItem(.Equals)
 			}
 		}
 	}
 
 	func tryRemoveLastOperation() -> Bool
 	{
-		if pending != nil
+		if pending != nil && history.count > 0 && history.last!.isBinaryOperation
 		{
-			if case .Operation(let operation)? = history.last
-			{
-				if case .BinaryOperation(_)? = operations[operation]
-				{
-					pending = nil
-					history.removeLast()
-					descriptionChangeHandler(description)
+			pending = nil
+			history.removeLast()
+			descriptionChangeHandler(description)
 
-					return true
-				}
-			}
+			return true
 		}
 
 		return false
@@ -221,13 +209,9 @@ class CalculatorBrain
 	{
 		if pending != nil
 		{
-			if case .Operation(let operationSymbol) = history.last!
+			if history.count > 0 && history.last!.isBinaryOperation
 			{
-				let operation = operations[operationSymbol]!
-				if case .UnaryOperation(_) = operation { } else
-				{
-					self.addHistoryItem(self.historyItemForOperand(result))
-				}
+				self.addHistoryItem(self.historyItemForOperand(result))
 			}
 
 			result = pending.binaryOperation(pending.firstOperand, result)
