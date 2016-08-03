@@ -155,6 +155,17 @@ class CalculatorTests: XCTestCase
 		XCTAssertEqualWithAccuracy(calc.result, 2 + sqrt(M_PI), accuracy: 0.00000001)
 	}
 
+	func test_pi_plus_value()
+	{
+		calc.performOperation("π")
+		calc.performOperation("+")
+		calc.setOperand(2)
+		calc.performOperation("=")
+
+		XCTAssertEqual(desc, "π+2=")
+		XCTAssertEqualWithAccuracy(calc.result, M_PI + 2, accuracy: 0.00000001)
+	}
+
 	func testReset()
 	{
 		calc.setOperand(7)

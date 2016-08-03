@@ -207,13 +207,13 @@ class CalculatorBrain
 
 	private func executeBinaryOperation()
 	{
+		if history.count == 0 || pending != nil && history.last!.isBinaryOperation
+		{
+			self.addHistoryItem(self.historyItemForOperand(result))
+		}
+
 		if pending != nil
 		{
-			if history.count > 0 && history.last!.isBinaryOperation
-			{
-				self.addHistoryItem(self.historyItemForOperand(result))
-			}
-
 			result = pending.binaryOperation(pending.firstOperand, result)
 			pending = nil
 		}
